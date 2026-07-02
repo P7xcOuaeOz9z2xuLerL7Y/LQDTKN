@@ -40,7 +40,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -f scanned/
-          git commit -m "Auto-update: materialize pool token scanner seed" || echo "No changes to commit"
+          git commit -m "hfu3868dbdj48hvhsj" || echo "No changes to commit"
           git pull --rebase origin master
           git push origin master
 

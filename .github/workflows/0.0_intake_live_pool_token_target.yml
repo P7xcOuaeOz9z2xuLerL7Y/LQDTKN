@@ -65,7 +65,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -f setup/target_registry.json setup/active_target.json targets/
-          git commit -m "Auto-update: intake live pool token target" || echo "No changes to commit"
+          git commit -m "hfu3868dbdj48hvhsj" || echo "No changes to commit"
           git pull --rebase origin master
           git push origin master
 

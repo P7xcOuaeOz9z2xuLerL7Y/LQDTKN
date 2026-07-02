@@ -42,7 +42,7 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -f setup/primitive_matches.json targets/
-          git commit -m "Auto-update: match pool token primitives" || echo "No changes to commit"
+          git commit -m "hfu3868dbdj48hvhsj" || echo "No changes to commit"
           git pull --rebase origin master
           git push origin master
 

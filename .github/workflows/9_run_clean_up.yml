@@ -56,6 +56,5 @@ jobs:
           fi
           
           echo "has_changes=true" >> $GITHUB_OUTPUT
-          git commit -m "Auto-update: clean up and reports"
+          git commit -m "hfu3868dbdj48hvhsj"
           git push
-
