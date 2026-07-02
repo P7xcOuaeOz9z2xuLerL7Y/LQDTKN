@@ -1,0 +1,66 @@
+{
+  "schema_version": "scanned-report-v1",
+  "verdict": "REJECT",
+  "reject_if_not_paid_scope": true,
+  "paid_scope_match": "none",
+  "report_identity": {
+    "title": "wkeydao Pancake pair AMM reserve desync / pool liquidity drain",
+    "source_report_id": "reserve_desync_sync_skim_burn",
+    "source_url": "https://bscscan.com/address/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+    "source_severity": "unknown",
+    "external_root_primitive": "accounting_drift"
+  },
+  "target_protocol_gate": {
+    "blueprint_protocol": "Sable",
+    "live_context_protocol": "Morpho Midnight",
+    "live_context_source": "live_context.json",
+    "context_matches_blueprint": false,
+    "context_mismatch_reason": "live_context.json protocol.name is 'Morpho Midnight' (EVM non-custodial fixed-rate fixed-maturity lending protocol); blueprint protocol is 'Sable' (Liquity-style BNB-collateralized debt system). Core contracts listed in live_context.json are src/Midnight.sol, src/interfaces, src/libraries, src/periphery, src/ratifiers \u2014 none of which exist in the Sable repository. The live context was generated for a different protocol and cannot be used as live state for Sable."
+  },
+  "live_onchain_context": {
+    "chain": "bsc",
+    "chain_id": "56",
+    "latest_block": "",
+    "captured_at_utc": "",
+    "commands_used": [],
+    "contracts": [],
+    "protocol_preconditions": []
+  },
+  "candidate": {
+    "claim": "",
+    "exact_code_path": [],
+    "attacker_path": {
+      "attacker_profile": "",
+      "preconditions": [],
+      "attacker_controlled_inputs": [],
+      "call_sequence": []
+    },
+    "value_extraction_model": {
+      "asset_or_reward": "",
+      "who_loses_value": "",
+      "how_attacker_gains_value": "",
+      "why_this_is_not_only_dos_or_griefing": ""
+    },
+    "existing_checks_reviewed": [],
+    "why_checks_fail": "",
+    "local_proof_required": {
+      "test_type": "",
+      "test_file_to_add": "",
+      "setup": [],
+      "expected_assertion": "",
+      "failure_condition": ""
+    }
+  },
+  "rejection_gates": {
+    "unprivileged_trigger": false,
+    "concrete_attacker_value_gain": false,
+    "not_admin_or_governance": false,
+    "not_pure_external_dependency": false,
+    "not_expected_behavior": false,
+    "not_duplicate_or_known_issue": false,
+    "not_stale_live_context": false
+  },
+  "rejection_reason": "stale live context does not match active blueprint. live_context.json contains protocol.name='Morpho Midnight' with core contracts src/Midnight.sol, src/interfaces, src/libraries, src/periphery, src/ratifiers \u2014 a completely different protocol from the Sable blueprint (Liquity-style BNB CDP system with ActivePool, TroveManager, StabilityPool, BorrowerOperations, SableStakingV2, CommunityIssuance). No valid live state for Sable contracts exists in the repository. Additionally, the external report target (0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5, wkeydao/USDT Pancake pair) is an AMM liquidity pool unrelated to the Sable protocol scope. No mapping from the external AMM reserve-desync primitive to a Sable fund-extraction or reward-extraction candidate can be established without valid live context. Per Live On-Chain Context Rules, verdict is REJECT.",
+  "deepwiki_source_url": "https://deepwiki.com/search/-deepwiki-analog-scan-prompt-e_b59ad446-0ef0-4858-9db6-15f9f48fdda4?mode=deep",
+  "deepwiki_verdict": "reject"
+}
