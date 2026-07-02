@@ -1,0 +1,376 @@
+{
+  "protocol": "wkeydao",
+  "chain": "bsc",
+  "generated_at": "2026-07-02T08:32:31Z",
+  "block_number": 107605257,
+  "contracts": [
+    {
+      "name": "UnknownContract",
+      "address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+      "source_file": "unknown",
+      "proxy": {
+        "is_proxy": false,
+        "implementation": null,
+        "admin": null,
+        "proxy_type": "unknown"
+      },
+      "balances": {
+        "native": {
+          "raw": "0",
+          "human": "0 BNB",
+          "usd": "unknown"
+        },
+        "erc20": [
+          {
+            "token": "0x55d398326f99059ff775485246999027b3197955",
+            "symbol": "USDT",
+            "name": "Tether USD",
+            "decimals": 18,
+            "raw_balance": "431321643314548024442541",
+            "human_balance": "431321.643314548024442541",
+            "usd_value": "unknown"
+          }
+        ],
+        "erc721": [],
+        "erc1155": []
+      },
+      "views": {},
+      "view_errors": {},
+      "events_discovered": {},
+      "mappings_discovered": {},
+      "dependencies": [],
+      "amm_pair": {
+        "is_pair_like": true,
+        "standard": "uniswap_v2_like",
+        "token0": {
+          "address": "0x194b302a4b0a79795fb68e2adf1b8c9ec5ff8d1f",
+          "symbol": "wkeyDAO",
+          "name": "WebKey DAO",
+          "decimals": 9
+        },
+        "token1": {
+          "address": "0x55d398326f99059ff775485246999027b3197955",
+          "symbol": "USDT",
+          "name": "Tether USD",
+          "decimals": 18
+        },
+        "factory": "0xca143ce32fe78f1f7019d7d551a6402fc5350c73",
+        "reserves": {
+          "reserve0_raw": "1666969033683125",
+          "reserve1_raw": "431321643314548024442541",
+          "block_timestamp_last": 1782981094,
+          "constant_product_raw": "718999822962669632726293554030163820625"
+        },
+        "raw_getReserves": "0x0000000000000000000000000000000000000000000000000005ec19791ab0b5000000000000000000000000000000000000000000005b55fe3e2a92fd9a7ead000000000000000000000000000000000000000000000000000000006a4621e6",
+        "total_supply_raw": "11937247372705935839",
+        "k_last_raw": "718089731421157953499414161420134436060",
+        "pair_token_balances": {
+          "token0_raw": "1666969033683125",
+          "token1_raw": "431321643314548024442541"
+        },
+        "reserve_balance_deltas": {
+          "token0_balance_minus_reserve0_raw": "0",
+          "token1_balance_minus_reserve1_raw": "0"
+        },
+        "primitive_signals": [
+          "pair_reserves",
+          "token_balances",
+          "router_pair_dependency"
+        ]
+      },
+      "liquidity_pool": {
+        "is_pool_like": true,
+        "detected_standards": [
+          "uniswap_v2_like"
+        ],
+        "primary_standard": "uniswap_v2_like",
+        "adapters": [
+          {
+            "is_pair_like": true,
+            "standard": "uniswap_v2_like",
+            "token0": {
+              "address": "0x194b302a4b0a79795fb68e2adf1b8c9ec5ff8d1f",
+              "symbol": "wkeyDAO",
+              "name": "WebKey DAO",
+              "decimals": 9
+            },
+            "token1": {
+              "address": "0x55d398326f99059ff775485246999027b3197955",
+              "symbol": "USDT",
+              "name": "Tether USD",
+              "decimals": 18
+            },
+            "factory": "0xca143ce32fe78f1f7019d7d551a6402fc5350c73",
+            "reserves": {
+              "reserve0_raw": "1666969033683125",
+              "reserve1_raw": "431321643314548024442541",
+              "block_timestamp_last": 1782981094,
+              "constant_product_raw": "718999822962669632726293554030163820625"
+            },
+            "raw_getReserves": "0x0000000000000000000000000000000000000000000000000005ec19791ab0b5000000000000000000000000000000000000000000005b55fe3e2a92fd9a7ead000000000000000000000000000000000000000000000000000000006a4621e6",
+            "total_supply_raw": "11937247372705935839",
+            "k_last_raw": "718089731421157953499414161420134436060",
+            "pair_token_balances": {
+              "token0_raw": "1666969033683125",
+              "token1_raw": "431321643314548024442541"
+            },
+            "reserve_balance_deltas": {
+              "token0_balance_minus_reserve0_raw": "0",
+              "token1_balance_minus_reserve1_raw": "0"
+            },
+            "primitive_signals": [
+              "pair_reserves",
+              "token_balances",
+              "router_pair_dependency"
+            ]
+          }
+        ],
+        "primitive_signals": [
+          "pair_reserves",
+          "router_pair_dependency",
+          "token_balances"
+        ]
+      },
+      "recent_activity": {
+        "sample_window_blocks": 1200,
+        "large_transfers": [],
+        "large_deposits": [],
+        "large_withdrawals": [],
+        "admin_events": []
+      },
+      "risk_notes": [
+        "Liquidity pool detected (uniswap_v2_like); test protocol-specific reserve, balance, share, price, and callback invariants.",
+        "V2-style pair detected; reserve/balance desync, skim/sync, fee-on-transfer, rebase, burn, and fake-liquidity paths should be tested.",
+        "Contract holds non-trivial ERC20 balance, largest observed: USDT 431321.643314548024442541"
+      ],
+      "audit_focus": [
+        "direct theft via accounting mismatch",
+        "permanent freezing via state-machine or request/finalization bugs",
+        "protocol insolvency via stale/inflated asset accounting",
+        "protocol-specific liquidity pool invariant break or balance/accounting drain",
+        "live pool reserve/balance desync or token-side AMM drain"
+      ],
+      "_meta": {
+        "is_contract": true,
+        "code_size_bytes": 14981,
+        "verification_source": null,
+        "compiler_version": null,
+        "proxy_contract_name": null,
+        "proxy_source_file": null
+      },
+      "pool_related_tokens": {
+        "tokens": [
+          {
+            "address": "0x194b302a4b0a79795fb68e2adf1b8c9ec5ff8d1f",
+            "symbol": "wkeyDAO",
+            "name": "WebKey DAO",
+            "decimals": 9,
+            "role": "token0",
+            "pool_address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+            "pool_standard": "uniswap_v2_like",
+            "is_common_counter_asset": false,
+            "target_role": "primary_suspect_token"
+          },
+          {
+            "address": "0x55d398326f99059ff775485246999027b3197955",
+            "symbol": "USDT",
+            "name": "Tether USD",
+            "decimals": 18,
+            "role": "token1",
+            "pool_address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+            "pool_standard": "uniswap_v2_like",
+            "is_common_counter_asset": true,
+            "target_role": "counter_asset"
+          }
+        ],
+        "primary_suspect_tokens": [
+          {
+            "address": "0x194b302a4b0a79795fb68e2adf1b8c9ec5ff8d1f",
+            "symbol": "wkeyDAO",
+            "name": "WebKey DAO",
+            "decimals": 9,
+            "role": "token0",
+            "pool_address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+            "pool_standard": "uniswap_v2_like",
+            "is_common_counter_asset": false,
+            "target_role": "primary_suspect_token"
+          }
+        ],
+        "counter_assets": [
+          {
+            "address": "0x55d398326f99059ff775485246999027b3197955",
+            "symbol": "USDT",
+            "name": "Tether USD",
+            "decimals": 18,
+            "role": "token1",
+            "pool_address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+            "pool_standard": "uniswap_v2_like",
+            "is_common_counter_asset": true,
+            "target_role": "counter_asset"
+          }
+        ],
+        "expansion_policy": "Pair/pool inputs are expanded into full contract scans for non-common underlying tokens; common quote/base assets remain context unless no suspect token exists."
+      }
+    },
+    {
+      "name": "WKEYDAO",
+      "address": "0x194b302a4b0a79795fb68e2adf1b8c9ec5ff8d1f",
+      "source_file": "contracts/ERC20.sol",
+      "proxy": {
+        "is_proxy": false,
+        "implementation": null,
+        "admin": null,
+        "proxy_type": "unknown"
+      },
+      "balances": {
+        "native": {
+          "raw": "0",
+          "human": "0 BNB",
+          "usd": "unknown"
+        },
+        "erc20": [
+          {
+            "token": "0x55d398326f99059ff775485246999027b3197955",
+            "symbol": "USDT",
+            "name": "Tether USD",
+            "decimals": 18,
+            "raw_balance": "17946868751801080648380",
+            "human_balance": "17946.86875180108064838",
+            "usd_value": "unknown"
+          }
+        ],
+        "erc721": [],
+        "erc1155": []
+      },
+      "views": {
+        "totalSupply": 48017857476214580,
+        "MaxSupply": 48022219156806433,
+        "buyFeeRatio": 0,
+        "buyFeeReceiver": "0xb63f6fe69dcaa4ec43903067ef2545edcb4b6ca7",
+        "decimals": 9,
+        "DEFAULT_ADMIN_ROLE": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "DOMAIN_SEPARATOR": "0x600a2bfa55f3f217dc28ecf70b591beb4011972e0c99cc9c924b66b38d078fa6",
+        "feeRatio": 3000,
+        "feeReceiver": "0x1e92d477473295e9f3b0f630f010b4ef8658da94",
+        "INTERN_SYSTEM": "0x849ce89bfb011047badb624cc7bca584328cbe2b50dc206a08607a3818d8f272",
+        "mainPair": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+        "MINT": "0xfdf81848136595c31bb5f76217767372bc4bf906663038eb38381131ea27ecba",
+        "name": "WebKey DAO",
+        "PERMIT_TYPEHASH": "0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9",
+        "PRECISION": 100000,
+        "symbol": "wkeyDAO"
+      },
+      "view_errors": {
+        "allowance": "requires input parameters",
+        "balanceOf": "requires input parameters",
+        "getRoleAdmin": "requires input parameters",
+        "getRoleMember": "requires input parameters",
+        "getRoleMemberCount": "requires input parameters",
+        "hasRole": "requires input parameters",
+        "nonces": "requires input parameters"
+      },
+      "events_discovered": {
+        "Transfer": {
+          "count_sampled": 0,
+          "sample_args": []
+        }
+      },
+      "mappings_discovered": {
+        "getRoleAdmin": {
+          "mapping_type": "getRoleAdmin(bytes32)",
+          "keys_source": "events=[] windows=[]",
+          "sample_keys": [],
+          "sample_values": {}
+        },
+        "getRoleMemberCount": {
+          "mapping_type": "getRoleMemberCount(bytes32)",
+          "keys_source": "events=[] windows=[]",
+          "sample_keys": [],
+          "sample_values": {}
+        },
+        "nonces": {
+          "mapping_type": "nonces(address)",
+          "keys_source": "events=[] windows=[]",
+          "sample_keys": [],
+          "sample_values": {}
+        },
+        "getRoleMember": {
+          "mapping_type": "getRoleMember(bytes32,uint256)",
+          "keys_source": "events=[] windows=[]",
+          "sample_keys": [],
+          "sample_values": {}
+        },
+        "hasRole": {
+          "mapping_type": "hasRole(bytes32,address)",
+          "keys_source": "events=[] windows=[]",
+          "sample_keys": [],
+          "sample_values": {}
+        }
+      },
+      "dependencies": [],
+      "amm_pair": {
+        "is_pair_like": false,
+        "reason": "token0/token1 not readable"
+      },
+      "liquidity_pool": {
+        "is_pool_like": false,
+        "detected_standards": [],
+        "adapters": [],
+        "reason": "no supported liquidity-pool adapter matched"
+      },
+      "recent_activity": {
+        "sample_window_blocks": 1200,
+        "large_transfers": [],
+        "large_deposits": [],
+        "large_withdrawals": [],
+        "admin_events": []
+      },
+      "risk_notes": [
+        "Expanded from a live liquidity pair/pool; audit token-side transfer, fee, mint, burn, rebase, and pair-accounting paths.",
+        "Contract holds non-trivial ERC20 balance, largest observed: USDT 17946.86875180108064838"
+      ],
+      "audit_focus": [
+        "token-side pool drain through the parent liquidity pair",
+        "direct theft via accounting mismatch",
+        "permanent freezing via state-machine or request/finalization bugs",
+        "protocol insolvency via stale/inflated asset accounting"
+      ],
+      "_meta": {
+        "is_contract": true,
+        "code_size_bytes": 7991,
+        "verification_source": "sourcify:full_match",
+        "compiler_version": "0.7.5+commit.eb77ed08",
+        "proxy_contract_name": "WKEYDAO",
+        "proxy_source_file": "contracts/ERC20.sol",
+        "target_role": "pool_underlying_token",
+        "pool_parent": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+        "pool_token_role": "token0",
+        "pool_standard": "uniswap_v2_like"
+      }
+    }
+  ],
+  "related_targets": [
+    {
+      "address": "0x194b302a4b0a79795fb68e2adf1b8c9ec5ff8d1f",
+      "symbol": "wkeyDAO",
+      "name": "WebKey DAO",
+      "decimals": 9,
+      "role": "token0",
+      "pool_address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+      "pool_standard": "uniswap_v2_like",
+      "is_common_counter_asset": false,
+      "target_role": "primary_suspect_token"
+    },
+    {
+      "address": "0x55d398326f99059ff775485246999027b3197955",
+      "symbol": "USDT",
+      "name": "Tether USD",
+      "decimals": 18,
+      "role": "token1",
+      "pool_address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+      "pool_standard": "uniswap_v2_like",
+      "is_common_counter_asset": true,
+      "target_role": "counter_asset"
+    }
+  ]
+}
