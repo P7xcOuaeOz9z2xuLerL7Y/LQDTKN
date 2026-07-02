@@ -71,7 +71,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add .
           
-          git commit -m "hfu3868dbdj48hvhsj"
+          git commit -m "hfu3868dbdj48hvhsj" || echo "No changes to commit"
           # Retry logic
           n=0
           until [ $n -ge 3 ]; do
@@ -127,7 +127,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add .
           
-          git commit -m "hfu3868dbdj48hvhsj"
+          git commit -m "hfu3868dbdj48hvhsj" || echo "No changes to commit"
           # Retry logic
           n=0
           until [ $n -ge 3 ]; do

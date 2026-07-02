@@ -91,7 +91,7 @@ jobs:
             exit 0
           fi
           
-          git commit -m "hfu3868dbdj48hvhsj"
+          git commit -m "hfu3868dbdj48hvhsj" || echo "No changes to commit"
           # Retry logic
           n=0
           until [ $n -ge 3 ]; do
