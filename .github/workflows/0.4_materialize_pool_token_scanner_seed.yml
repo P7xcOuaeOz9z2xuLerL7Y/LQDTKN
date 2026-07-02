@@ -32,6 +32,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests==2.31.0
+
       - name: Materialize scanner seed
         run: python run_pool_token_stage.py materialize-scanner-seed
 
