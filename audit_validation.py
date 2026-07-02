@@ -530,6 +530,9 @@ def generate_file_path_get_validated():
     validated_questions_files = sorted(Path(validated_questions_directory).glob('*.json'))
 
     if not validated_questions_files:
+        if list(Path(validation_pending_directory).glob("*.json")):
+            print("No validation files found; using existing validation_pending queue")
+            return []
         raise FileNotFoundError("No validation files found")
 
     moved_files = []
