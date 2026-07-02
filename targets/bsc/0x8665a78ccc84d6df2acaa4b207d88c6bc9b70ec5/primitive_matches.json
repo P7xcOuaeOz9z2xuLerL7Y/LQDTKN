@@ -1,0 +1,338 @@
+{
+  "schema_version": "primitive-matches-v1",
+  "source_bank": "https://hacked.slowmist.io/",
+  "bank_captured_at": "2026-07-01",
+  "blueprint_project": "Live Pool Token Bug Bounty",
+  "blueprint_source_repo": "pool-token-live-bounty/corpus",
+  "target_identity": {
+    "protocol": "",
+    "chain": "bsc",
+    "chain_id": "",
+    "address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+    "label": "UnknownContract"
+  },
+  "match_threshold": 2,
+  "matched_primitives": [
+    {
+      "id": "reserve_desync_sync_skim_burn",
+      "title": "AMM reserve desync through sync, skim, burn, or direct pair-balance mutation",
+      "bucket": "pool_liquidity_drain",
+      "score": 18,
+      "matched_keywords": [
+        "reserve",
+        "reserves",
+        "sync",
+        "skim",
+        "burn",
+        "pair",
+        "amm",
+        "uniswap",
+        "balanceOf",
+        "getReserves"
+      ],
+      "matched_live_context_signals": [
+        "pair_reserves",
+        "token_balances"
+      ],
+      "matched_code_signals": [
+        "getReserves",
+        "_transfer",
+        "burn",
+        "pair"
+      ],
+      "local_checks": [
+        "Compare pair getReserves() with live token balances before and after attacker-controlled token transfer paths.",
+        "Fork-test whether token burn, fee, rebase, transfer hook, or maintenance call can change pair balances before sync().",
+        "Assert swap output cannot exceed fair value after any attacker-triggered reserve rewrite."
+      ],
+      "reject_if_missing": [
+        "live pool address",
+        "token0/token1 balances",
+        "reserve snapshot",
+        "attacker-controlled trigger"
+      ]
+    },
+    {
+      "id": "lp_share_or_vault_share_inflation",
+      "title": "LP, vault, or receipt-share inflation enables over-redemption",
+      "bucket": "lp_vault_share_extraction",
+      "score": 9,
+      "matched_keywords": [
+        "share",
+        "totalSupply",
+        "deposit",
+        "withdraw",
+        "mint"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "deposit",
+        "withdraw",
+        "mint",
+        "totalSupply"
+      ],
+      "local_checks": [
+        "Test zero-supply, dust, first-depositor, old-path/new-path, and rounding cases for over-mint or over-redeem.",
+        "Assert share supply and asset balances remain proportional across deposit, withdraw, redeem, migrate, and emergency paths.",
+        "Use a fork snapshot when live vault assets or stale wrapper positions are required."
+      ],
+      "reject_if_missing": [
+        "live assets",
+        "share supply",
+        "share mint/redeem code"
+      ]
+    },
+    {
+      "id": "admin_role_bypass_to_mint_dump_or_withdraw",
+      "title": "Authorization invariant bypass mints, withdraws, or dumps into live liquidity",
+      "bucket": "authorization_to_value_drain",
+      "score": 8,
+      "matched_keywords": [
+        "admin",
+        "role",
+        "mint",
+        "withdraw"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "hasRole",
+        "admin",
+        "mint",
+        "withdraw"
+      ],
+      "local_checks": [
+        "Prove the attacker can bypass the authorization guard without leaked keys, malicious governance, or owner cooperation.",
+        "Show the bypass reaches mint, withdraw, upgrade, role, or pool-dump value movement.",
+        "Reject ordinary key compromise or governance capture without a contract-side bypass."
+      ],
+      "reject_if_missing": [
+        "authorization guard",
+        "bypass path",
+        "live value movement"
+      ]
+    },
+    {
+      "id": "permit_signature_or_approval_wrapper_drain",
+      "title": "Permit, signature, approval, or wrapper-spender flaw moves assets without authorization",
+      "bucket": "approval_signature_drain",
+      "score": 8,
+      "matched_keywords": [
+        "permit",
+        "allowance",
+        "nonce",
+        "domain"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "permit",
+        "DOMAIN_SEPARATOR",
+        "nonces",
+        "allowance"
+      ],
+      "local_checks": [
+        "Test dummy signatures, address(0) signer recovery, replayed nonces, wrong chain/domain, wrong spender, and wrapper approval forwarding.",
+        "Assert successful approval cannot be created unless the owner intended the exact token, spender, amount, deadline, nonce, chain, and contract.",
+        "Reject if the flaw cannot move live user/protocol assets or wrappers."
+      ],
+      "reject_if_missing": [
+        "approval or permit path",
+        "asset-bearing token/wrapper",
+        "invalid signature scenario"
+      ]
+    },
+    {
+      "id": "token_hook_pair_balance_drain",
+      "title": "Token hook, transfer, fee, tax, rebase, mint, or burn logic creates pool-drainable imbalance",
+      "bucket": "token_side_pool_drain",
+      "score": 8,
+      "matched_keywords": [
+        "_transfer",
+        "fee",
+        "rebase",
+        "mint",
+        "burn",
+        "decimals"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "_transfer",
+        "decimals"
+      ],
+      "local_checks": [
+        "Fuzz transfer and transferFrom around pair/router addresses and assert no attacker can change pool backing for profit.",
+        "Probe zero-value transfers, self transfers, pair-to-router transfers, fee-exempt paths, and maintenance hooks.",
+        "Verify owner-renounced or role-controlled settings cannot leave an unprivileged triggerable drain path."
+      ],
+      "reject_if_missing": [
+        "token source or decompiled transfer path",
+        "live paired liquidity",
+        "attacker-controlled token call"
+      ]
+    },
+    {
+      "id": "fake_lp_token_or_position_validation",
+      "title": "Fake LP token, fake position, or weak pool identity validation unlocks real liquidity",
+      "bucket": "lp_vault_share_extraction",
+      "score": 6,
+      "matched_keywords": [
+        "token0",
+        "token1",
+        "factory"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "token0",
+        "token1",
+        "factory"
+      ],
+      "local_checks": [
+        "Attempt fake LP/position identifiers against withdraw/remove-liquidity paths.",
+        "Assert pool identity is bound to factory, token pair, LP mint, position owner, and target program.",
+        "Reject if fake identity cannot reach assets held by the current live target."
+      ],
+      "reject_if_missing": [
+        "withdraw/remove liquidity path",
+        "identity validation code",
+        "live liquidity"
+      ]
+    },
+    {
+      "id": "forgeable_liquidity_add_detection",
+      "title": "Forgeable add-liquidity detection bypasses sell fees or accounting",
+      "bucket": "token_side_pool_drain",
+      "score": 6,
+      "matched_keywords": [
+        "router",
+        "pair"
+      ],
+      "matched_live_context_signals": [
+        "router_pair_dependency"
+      ],
+      "matched_code_signals": [
+        "getReserves",
+        "buyFee"
+      ],
+      "local_checks": [
+        "Send tiny quote/token amounts directly to the pair before sells and assert fee classification cannot be forged.",
+        "Fork-test sell routing with manipulated pair balances and compare charged fees against expected fees.",
+        "Reject if bypassing a fee does not extract pool or protocol value beyond normal trading."
+      ],
+      "reject_if_missing": [
+        "fee logic",
+        "router/pair logic",
+        "live pair with reserves"
+      ]
+    },
+    {
+      "id": "deprecated_pool_or_old_path_compatibility",
+      "title": "Deprecated pool, old path, or cross-version compatibility bug drains residual live assets",
+      "bucket": "legacy_live_value_drain",
+      "score": 4,
+      "matched_keywords": [
+        "old",
+        "version"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "old",
+        "withdraw"
+      ],
+      "local_checks": [
+        "Check whether old deposit/mint paths remain callable while new redeem/withdraw paths accept inflated state.",
+        "Assert deprecated contracts with live balances cannot be drained by stale validation or missing ownership checks.",
+        "Reject if no residual funds, approvals, or backing remain."
+      ],
+      "reject_if_missing": [
+        "old callable path",
+        "live residual assets",
+        "withdraw/redeem path"
+      ]
+    },
+    {
+      "id": "liquidity_locker_owner_override",
+      "title": "Liquidity locker or custody override releases locked/protocol-held LP",
+      "bucket": "liquidity_custody_drain",
+      "score": 4,
+      "matched_keywords": [
+        "admin",
+        "fee"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "withdraw",
+        "admin"
+      ],
+      "local_checks": [
+        "Check whether unprivileged or bypassed-role paths can mutate unlock time, fee, recipient, owner, or withdrawal authorization.",
+        "Assert protocol-held/locked LP cannot leave custody before valid unlock conditions.",
+        "Treat pure key compromise as reject unless a contract-side authorization invariant is bypassed."
+      ],
+      "reject_if_missing": [
+        "locked/protocol-held LP",
+        "custody contract",
+        "withdraw authorization path"
+      ]
+    },
+    {
+      "id": "spot_price_or_oracle_flashloan_extraction",
+      "title": "Flash-loanable spot price or oracle manipulation extracts mint, redeem, borrow, swap, or claim value",
+      "bucket": "price_or_oracle_extraction",
+      "score": 4,
+      "matched_keywords": [
+        "price",
+        "reserve"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "quote",
+        "reserve"
+      ],
+      "local_checks": [
+        "Identify the price source used for value movement and whether it can be moved inside the attacker transaction/window.",
+        "Fork-test flash-loan reserve manipulation around mint, redeem, borrow, liquidate, swap, or claim paths.",
+        "Assert attacker profit remains after loan repayment and fees."
+      ],
+      "reject_if_missing": [
+        "price-dependent value movement",
+        "manipulable source",
+        "profit model"
+      ]
+    },
+    {
+      "id": "bridge_wrapped_supply_or_escrow_mismatch",
+      "title": "Bridge, wrapped-token, or escrow validation mismatch releases real backing",
+      "bucket": "bridge_wrapped_asset_drain",
+      "score": 2,
+      "matched_keywords": [
+        "mint"
+      ],
+      "matched_live_context_signals": [],
+      "matched_code_signals": [
+        "mint"
+      ],
+      "local_checks": [
+        "Assert mint/redeem/release requires a verified message bound to the correct source chain, token, amount, recipient, nonce, and escrow.",
+        "Compare wrapped supply against live escrow backing where possible.",
+        "Reject if the bridge has no live backing or release path in scope."
+      ],
+      "reject_if_missing": [
+        "live escrow or backing",
+        "wrapped supply",
+        "message/proof validation path"
+      ]
+    }
+  ],
+  "unmatched_primitives": [
+    {
+      "id": "reward_accumulator_or_claim_replay",
+      "title": "Reward, dividend, staking, or harvest accounting can be overclaimed or replayed",
+      "score": 0
+    }
+  ],
+  "completion": {
+    "has_live_context": true,
+    "has_matches": true,
+    "requires_local_proof": true,
+    "note": "Primitive matches are audit routing hints only; they are not vulnerability proof."
+  }
+}
