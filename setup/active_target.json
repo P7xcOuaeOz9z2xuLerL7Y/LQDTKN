@@ -1,0 +1,28 @@
+{
+  "schema_version": "pool-token-target-v1",
+  "active": true,
+  "protocol": "wkeydao",
+  "label": "wkeydao Pancake pair",
+  "target_type": "pool",
+  "chain": "bsc",
+  "chain_id": "56",
+  "address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+  "source": "0x8665A78ccC84D6Df2ACaA4b207d88c6Bc9b70Ec5",
+  "explorer_url": "https://bscscan.com/address/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+  "blueprint_path": "blueprints/live_pool_token_bug_bounty.json",
+  "paths": {
+    "target_dir": "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+    "audit_seed": "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/audit_seed.json",
+    "live_context": "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/live_context.json",
+    "primitive_matches": "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/primitive_matches.json",
+    "probe_manifest": "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/probe_manifest.json",
+    "deepwiki_brief": "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/deepwiki_brief.md"
+  },
+  "workflow": {
+    "0.0_intake_target": "complete",
+    "0.1_collect_live_context": "pending",
+    "0.2_match_exploit_primitives": "pending",
+    "0.3_generate_probe_manifest": "pending",
+    "1_generate_questions": "pending"
+  }
+}

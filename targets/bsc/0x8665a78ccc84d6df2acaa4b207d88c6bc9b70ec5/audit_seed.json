@@ -1,0 +1,24 @@
+{
+  "schema_version": "pool-token-audit-seed-v1",
+  "protocol": "wkeydao",
+  "label": "wkeydao Pancake pair",
+  "target_type": "pool",
+  "chain": "bsc",
+  "chain_id": "56",
+  "address": "0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+  "explorer_url": "https://bscscan.com/address/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5",
+  "blueprint_path": "blueprints/live_pool_token_bug_bounty.json",
+  "paid_impact_focus": [
+    "live pool liquidity extraction",
+    "token-side pool drain",
+    "LP or vault share extraction",
+    "reward extraction",
+    "approval or permit drain"
+  ],
+  "required_next_artifacts": [
+    "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/live_context.json",
+    "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/primitive_matches.json",
+    "targets/bsc/0x8665a78ccc84d6df2acaa4b207d88c6bc9b70ec5/probe_manifest.json"
+  ],
+  "deepwiki_boundary": "Seed only. DeepWiki candidates still need exact live context, primitive matching, and local proof."
+}
