@@ -221,7 +221,7 @@ Matched primitive examples:
 - `permit_signature_or_approval_wrapper_drain`
 - `token_hook_pair_balance_drain`
 
-Important note: an earlier workflow `8` result was saved under `rejected_by_deepwiki/` before the DeepWiki prompt was fixed to include the inline active target and live context. That earlier rejection should be treated as stale operational evidence, not as a meaningful security result for WKEYDAO.
+Important note: an earlier workflow `8` result was generated before the DeepWiki prompt was fixed to include the inline active target and live context. That stale queue/output was removed from the active repo state. The next meaningful DeepWiki result must come from a fresh workflow `7` run followed by workflow `8`.
 
 ## How Critical Findings Are Supposed To Surface
 
