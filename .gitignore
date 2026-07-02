@@ -1,0 +1,50 @@
+.env
+.DS_Store
+.idea/
+automation_pending
+ __pycache__
+ __pycache__/*
+ /__pycache__/*
+ question_pending/
+ question_pending/*
+/question_pending/*
+ validated_questions_pending/
+ validated_questions_pending/*
+/validated_questions_pending/*
+ validation_pending/
+ validation_pending/*
+/validation_pending/*
+ scope_pending/
+ scope_pending/*
+/scope_pending/*
+ scope_questions_pending/
+ scope_questions_pending/*
+/scope_questions_pending/*
+
+_audited/
+__pycache__/
+*.py[cod]
+*$py.class
+
+_validated_questions
+
+key.json
+
+# Generated protocol-specific run state. Workflows can force-add fresh
+# artifacts when they intentionally need to pass state to the next stage.
+deepwiki_unknown/
+proof_gate_pending/
+proof_gate_processed.json
+validated_questions/
+needs_local_proof/
+deepwiki_candidates/
+rejected_by_deepwiki/
+validated/
+audited/
+scanned/
+targets/
+probes/
+setup/live_context.json
+setup/primitive_matches.json
+setup/target_registry.json
+setup/active_target.json

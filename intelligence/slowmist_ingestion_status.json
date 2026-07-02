@@ -1,0 +1,22 @@
+{
+  "schema_version": "slowmist-ingestion-status-v1",
+  "source_url": "https://hacked.slowmist.io/",
+  "captured_at": "2026-07-01",
+  "pages_checked": 109,
+  "events_reported_by_source": 2172,
+  "pool_token_liquidity_related_events_matched": 934,
+  "status": "seeded_from_public_index",
+  "notes": [
+    "Counts are keyword-filtered and buckets overlap.",
+    "Use this as primitive-selection memory, not as proof of any current target vulnerability.",
+    "Each target still needs live context, source/decompiled code review, and local proof before promotion."
+  ],
+  "next_refresh": {
+    "required_when": [
+      "SlowMist index count changes materially",
+      "new target chain or exploit family is added",
+      "before using exact incident counts in user-facing reports"
+    ],
+    "recommended_command_shape": "curl -L --silent --show-error --fail 'https://hacked.slowmist.io/?page=<n>'"
+  }
+}

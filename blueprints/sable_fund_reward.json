@@ -1,0 +1,93 @@
+{
+  "max_repo": 10,
+  "source_repo": "incjanta/623_sable_active_pool",
+  "repo_name": "623_sable_active_pool",
+  "project_name": "Sable",
+  "target_label": "sable pool",
+  "paid_impact_focus": "fund extraction and reward extraction",
+  "scope_files": [
+    "src/ActivePool.sol",
+    "src/BorrowerOperations.sol",
+    "src/TroveManager.sol",
+    "src/StabilityPool.sol",
+    "src/DefaultPool.sol",
+    "src/CollSurplusPool.sol",
+    "src/USDSToken.sol",
+    "src/PriceFeed.sol",
+    "src/SystemState.sol",
+    "src/SortedTroves.sol",
+    "src/OracleRateCalculation.sol",
+    "src/TroveHelper.sol",
+    "src/SABLE/SableStakingV2.sol",
+    "src/SABLE/CommunityIssuance.sol",
+    "src/SABLE/SABLEToken.sol",
+    "src/GasPool.sol",
+    "src/TimeLock.sol",
+    "src/SableRewarder.sol",
+    "src/BNBTransferScript.sol",
+    "src/Proxy/*.sol"
+  ],
+  "target_scopes": [
+    "Critical Fund extraction or protocol value drain: any bug that lets a user gain, mint, borrow, redeem, withdraw, claim, or extract more funds than intended from the protocol, including minting value from nothing, flashloan-assisted extraction, oracle manipulation extraction, broken accounting, unauthorized withdrawals, over-redemption, underpayment, insolvency creation, or any other path that increases attacker-controlled funds at protocol or user expense",
+    "Critical Reward extraction or unfair reward access: any bug that lets a user access rewards they should not receive, enter or manipulate state before rewards are distributed, bypass eligibility or timing rules, claim more rewards than other users with the same entitlement, repeat/replay reward claims, or otherwise gain excess reward value from the protocol"
+  ],
+  "live_context_hint": "deployed address graph, native/token balances, pool accounting, trove state, oracle config, system parameters, staking/reward state, token decimals, and known invariant assumptions",
+  "context_interfaces": [
+    "src/Interfaces/IActivePool.sol",
+    "src/Interfaces/IPool.sol",
+    "src/Interfaces/IDefaultPool.sol",
+    "src/Interfaces/ICollSurplusPool.sol",
+    "src/Interfaces/IStabilityPool.sol",
+    "src/Interfaces/ITroveManager.sol",
+    "src/Interfaces/ITroveHelper.sol",
+    "src/Interfaces/IBorrowerOperations.sol",
+    "src/Interfaces/IUSDSToken.sol",
+    "src/Interfaces/ISABLEToken.sol",
+    "src/Interfaces/ISableStakingV2.sol",
+    "src/Interfaces/ICommunityIssuance.sol",
+    "src/Interfaces/IPriceFeed.sol",
+    "src/Interfaces/IOracleRateCalculation.sol",
+    "src/Interfaces/ISortedTroves.sol",
+    "src/Dependencies/IERC20.sol",
+    "src/Dependencies/IERC2612.sol"
+  ],
+  "protocol_focus": "Sable is a Liquity-style BNB-collateralized debt system with troves, ActivePool BNB custody, USDS debt/supply accounting, liquidation/redemption flows, StabilityPool deposits/rewards, SABLE staking rewards, oracle-driven solvency checks, and timelock-controlled system parameters. This bounty focus is only fund extraction and reward extraction.",
+  "attacker_profile": "borrower, USDS holder, StabilityPool depositor, liquidator, redeemer, SABLE/SABLE_LP holder, staker, reward claimant, spender, permit user, or receiver contract",
+  "core_invariants": [
+    "attackers must not extract BNB, USDS, SABLE, SABLE_LP, collateral, debt value, liquidation gains, redemption value, staking rewards, or StabilityPool rewards beyond valid entitlement",
+    "ActivePool, DefaultPool, StabilityPool, GasPool, CollSurplusPool, staking, and token balances must match their accounting liabilities",
+    "every USDS mint must correspond to valid debt and every burn/repay/redemption/liquidation must reduce the correct liability",
+    "collateral cannot be withdrawn, redeemed, seized, or redirected unless the attacker pays the required debt/value and satisfies liquidation/redemption rules",
+    "liquidation, redemption, StabilityPool, staking, and reward paths must not let a user receive more value than their collateral/deposit/stake/reward entitlement",
+    "oracle, rounding, decimal, fee, and accounting edge cases must not create extractable surplus for an unprivileged user",
+    "token approvals, permits, callbacks, external transfers, or reentrancy must not enable unauthorized value movement or double-claiming"
+  ],
+  "high_value_surfaces": [
+    "ActivePool and DefaultPool BNB/debt accounting: over-withdrawal, over-redemption, double-counting, redistribution mistakes",
+    "BorrowerOperations trove flows: open, adjust, repay, close, collateral withdrawal, gas compensation, fee minting",
+    "TroveManager liquidation/redemption: seize amount, repay amount, collateral surplus, gas compensation, baseRate, snapshots, last-trove boundaries",
+    "StabilityPool deposits/withdrawals/offsets: USDS deposit accounting, BNB gains, SABLE gains, front-end rewards, product/sum/epoch/scale rounding",
+    "CollSurplusPool and GasPool: claimable collateral and gas compensation balances that can be overclaimed or misdirected",
+    "SableStakingV2 and CommunityIssuance: LP stake accounting, BNB/USDS/SABLE reward accumulators, repeated claims, zero-stake reward leakage, wrong recipient",
+    "USDSToken/SABLEToken: allowance, permit, mint/burn, transfer restrictions, pool-transfer paths that can move value without valid entitlement",
+    "PriceFeed and OracleRateCalculation: stale/fallback/deviation/rounding cases only when they create borrow, redemption, liquidation, or reward extraction",
+    "math/libs: fixed-point rounding, truncation, dust, snapshot, accumulator, and precision errors that create extractable value",
+    "external-call/reentrancy surfaces: receiver contracts, token behavior, BNB sends, and state ordering only when they enable unauthorized withdrawal, overclaim, or double-claim"
+  ],
+  "impact_mapping": [
+    "Fund extraction: attacker receives BNB, USDS, SABLE, SABLE_LP, collateral, redemption value, liquidation gain, fee value, or debt value without paying correct value",
+    "Reward extraction: attacker overclaims StabilityPool, front-end, CommunityIssuance, staking, BNB, USDS, SABLE, or LP-derived rewards",
+    "Insolvency with extraction: attacker creates or uses a balance/accounting mismatch to withdraw, redeem, borrow, liquidate, or claim more than funded",
+    "Bad debt with extraction: borrower receives USDS or collateral value while undercollateralized or without the required repayment",
+    "Unauthorized seizure/withdrawal: funds move to the attacker without valid authorization, ownership, redemption, liquidation, stake, deposit, or claim entitlement",
+    "Accounting corruption only counts if it leads to attacker-controlled over-withdrawal, over-borrow, over-redemption, over-liquidation, over-claim, or reward overpayment"
+  ],
+  "known_rejection_memory": [
+    "Reject DoS, freeze, liveness, temporary lock, liquidation blockage, gas-only, and griefing claims unless the same reachable path transfers excess value to the attacker.",
+    "Reject public mempool competition, expected first-come-first-served liquidation/reward competition, or ordinary MEV unless a protected protocol invariant is broken.",
+    "Reject stale input/retry mechanics when the affected actor can retry with updated state and no permanent fund or reward loss is proven.",
+    "Reject unsupported oracle, weird-token, malicious admin, governance, leaked-key, or third-party-contract assumptions unless the paid scope explicitly includes them.",
+    "Reject accounting desync claims that do not lead to attacker-controlled over-withdrawal, over-borrow, over-redemption, over-liquidation, over-claim, or reward overpayment.",
+    "Reject previous-audit, README, NatSpec, SECURITY, or known-issue duplicates unless the candidate proves a distinct root cause and materially stronger paid impact."
+  ]
+}

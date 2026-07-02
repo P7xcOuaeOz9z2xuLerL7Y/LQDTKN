@@ -1,0 +1,75 @@
+name: 0.0 Intake Live Pool Token Target
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Explorer URL or raw address"
+        required: true
+      default_chain:
+        description: "Chain for raw addresses"
+        required: false
+        default: "bsc"
+      protocol:
+        description: "Protocol/project name"
+        required: false
+        default: ""
+      label:
+        description: "Human-readable target label"
+        required: false
+        default: ""
+      target_type:
+        description: "pool, token, vault, reward_pool, bridge, locker, or pool_or_token"
+        required: false
+        default: "pool_or_token"
+      smoke_limit:
+        description: "Optional small-run limit for smoke testing"
+        required: false
+        default: ""
+      chain_next:
+        description: "Verify output and dispatch the next workflow"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  intake:
+    runs-on: ubuntu-latest
+    env:
+      BOT_SMOKE_LIMIT: ${{ inputs.smoke_limit }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Intake target
+        run: |
+          python run_intake_pool_token_target.py \
+            --target "${{ inputs.target }}" \
+            --default-chain "${{ inputs.default_chain }}" \
+            --protocol "${{ inputs.protocol }}" \
+            --label "${{ inputs.label }}" \
+            --target-type "${{ inputs.target_type }}"
+
+      - name: Commit artifacts
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -f setup/target_registry.json setup/active_target.json targets/
+          git commit -m "Auto-update: intake live pool token target" || echo "No changes to commit"
+          git pull --rebase origin master
+          git push origin master
+
+      - name: Verify and advance chain
+        if: inputs.chain_next == 'true'
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: python workflow_chain.py advance --stage 0.0 --next-workflow 0.1_collect_live_pool_token_context.yml --smoke-limit "${{ inputs.smoke_limit }}"

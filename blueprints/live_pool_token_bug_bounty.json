@@ -1,0 +1,119 @@
+{
+  "max_repo": 10,
+  "source_repo": "pool-token-live-bounty/corpus",
+  "repo_name": "pool-token-live-bounty",
+  "project_name": "Live Pool Token Bug Bounty",
+  "target_label": "live liquidity pool, token, vault, reward, or bridge target",
+  "paid_impact_focus": "live fund extraction, protocol value drain, pool liquidity drain, token balance drain, LP or vault share extraction, and reward extraction",
+  "scope_files": [
+    "contracts/**/*.sol",
+    "src/**/*.sol",
+    "interfaces/**/*.sol",
+    "decompiled/**/*.sol",
+    "decompiled/**/*.yul",
+    "source_or_decompiled/**/*",
+    "targets/**/*.sol",
+    "targets/**/*.json"
+  ],
+  "target_scopes": [
+    "Critical live liquidity extraction: any bug that lets an unprivileged attacker drain, withdraw, redeem, swap out, seize, mint against, or otherwise extract more assets than paid from an AMM pair, concentrated-liquidity pool, vault, strategy, bridge escrow, locker, reward pool, or protocol-held liquidity position.",
+    "Critical token-side pool drain: any bug in token transfer, transferFrom, _transfer, _update, mint, burn, rebase, fee, tax, blacklist, reflection, auto-liquidity, auto-swap, skim, sync, pair-balance, or reserve interaction logic that breaks pool accounting and gives the attacker excess tokens, stablecoins, native assets, LP shares, or wrapped assets.",
+    "Critical LP/vault/share extraction: any bug that lets an attacker mint inflated LP/vault shares, redeem shares for excess assets, bypass share accounting, use fake LP tokens, reuse old deposit paths, abuse rounding, or withdraw protocol/user liquidity beyond entitlement.",
+    "Critical reward extraction: any bug that lets an attacker overclaim, replay, front-load, inflate, or redirect rewards, dividends, emissions, staking gains, fee shares, referral rewards, or harvest proceeds from live reward or liquidity-mining state.",
+    "Critical approval/signature extraction: any bug in permit, signature verification, approval routing, spender scope, nonces, domain separation, or wrapper approvals that lets an attacker move pool tokens, LP wrappers, vault shares, or underlying assets without valid user or protocol authorization."
+  ],
+  "live_context_hint": "chain, block, pool addresses, token addresses, reserves, balances, decimals, LP total supply, locked/burned/protocol-held LP, vault total assets and shares, reward accumulators, owner/admin/proxy roles, mint/burn permissions, transfer hooks, fee/tax/rebase settings, permit domain and nonce behavior, oracle source, router/factory dependencies, and recent swap/mint/burn/sync/skim/deposit/withdraw/claim events",
+  "context_interfaces": [
+    "IERC20",
+    "IERC20Metadata",
+    "IERC20Permit",
+    "IUniswapV2Pair",
+    "IUniswapV2Factory",
+    "IUniswapV2Router",
+    "IUniswapV3Pool",
+    "IERC4626",
+    "IAccessControl",
+    "IOwnable",
+    "IOracle",
+    "IRewarder",
+    "IStaking",
+    "IBridgeVault",
+    "ILiquidityLocker"
+  ],
+  "protocol_focus": "This blueprint is for bug-bounty hunting on live liquidity pools, live tokens, LP/vault shares, liquidity lockers, farms, reward pools, bridge escrows, and value-bearing wrappers. It prioritizes attacker paths that end with concrete asset, token, LP share, vault share, wrapped asset, or reward gain against current live state.",
+  "attacker_profile": "unprivileged trader, token holder, LP holder, vault depositor, staker, reward claimant, router caller, flash-loan borrower, MEV searcher, permit spender, bridge user, or receiver contract",
+  "core_invariants": [
+    "pool reserves, cached reserves, live token balances, and swap output math must not be desynchronized in a way that lets the attacker withdraw more value than paid",
+    "token transfer, transferFrom, _transfer, _update, mint, burn, rebase, fee, tax, reflection, blacklist, auto-liquidity, and auto-swap logic must not let an attacker manipulate pool balances or reserves for profit",
+    "LP shares, vault shares, wrapped tokens, and receipt tokens must always represent proportional backing and must not be mintable, redeemable, or withdrawable beyond deposited value",
+    "deposit, withdraw, redeem, claim, harvest, migration, and emergency paths must update accounting before any attacker-controlled reentry or external value transfer",
+    "reward accumulators, indexes, per-share accounting, snapshots, epochs, and claim flags must not allow replay, double claim, front-loaded claim, zero-share claim, or cross-user reward theft",
+    "permit, approval, signature, nonce, domain, and spender-routing checks must bind the correct owner, spender, token, amount, chain, contract, deadline, and nonce",
+    "oracle, TWAP, spot price, reserve price, and external price inputs must not be manipulable within a profitable transaction or short window when used for mint, redeem, borrow, claim, or swap value",
+    "bridge, escrow, wrapped-token, and cross-chain accounting must not mint or release real assets without a valid locked backing or verified message",
+    "owner/admin/governance/key-dependent paths only qualify when a live on-chain authorization invariant is bypassed or an unprivileged user can trigger the dangerous path"
+  ],
+  "high_value_surfaces": [
+    "AMM V2-style pairs across any fork or chain, including Uniswap V2, PancakeSwap, SushiSwap, QuickSwap, Trader Joe V1-style forks, and clone factories: reserve desync, burn-from-pair, skim/sync abuse, fee-on-transfer mismatch, rebase mismatch, fake liquidity-add detection, pair balance mutation, and invariant bypass",
+    "AMM V3-style or concentrated-liquidity pools across any fork or chain, including Uniswap V3, PancakeSwap V3, Algebra-style pools, and similar CLMM designs: position accounting, tick liquidity, fee growth, callback ordering, old/deprecated pool validation, and fake LP or mint validation",
+    "Stable-swap, weighted-pool, vault-managed, and multi-asset pools, including Curve-style, Balancer-style, Solidly-style, DODO-style, Maverick-style, and protocol-specific liquidity engines: invariant math, virtual price, amplification/weights, vault accounting, pool-token identity, and callback/order assumptions",
+    "tokens paired with deep liquidity: custom transfer hooks, _update hooks, transferFrom shortcuts, tax/fee bypass, auto-burn, auto-swap, reflection, blacklist/whitelist, decimals changes, and hidden balance grants",
+    "vaults and LP wrappers: deposit/redeem share math, totalAssets drift, old deposit path compatibility, rounding, zero-supply edge cases, fake share minting, and EIP-2612 approvals",
+    "liquidity lockers and launch custody: unlock-time mutation, owner override, fee override, LP custody migration, emergency withdraw, and protocol-held LP accounting",
+    "reward and staking systems: per-share indexes, dividend timing, harvest hooks, claim signatures, Merkle roots, duplicate pool IDs, epoch/scale rollover, and zero-share reward paths",
+    "oracles and price paths: spot reserves, flash-loanable pools, stale prices, decimal mismatch, multi-hop path assumptions, and price used for mint/redeem/borrow/claim",
+    "bridges and wrapped assets: proof/message validation, source-channel binding, escrow balance backing, wrapped supply, mint/redeem limits, and deprecated bridge escape paths",
+    "approval and signature flows: permit recovery edge cases, dummy signatures, address(0) signer handling, domain mismatch, replay, unlimited approval sinks, and wrapper spender routing"
+  ],
+  "impact_mapping": [
+    "Pool liquidity drain: attacker exits with stablecoins, native assets, token0/token1, or routed assets from a pool beyond the fair swap or withdrawal amount",
+    "Token balance drain: attacker exploits token logic to move, mint, burn, or redirect tokens in a way that creates extractable pool or user value",
+    "LP or vault share extraction: attacker mints, receives, or redeems LP/vault shares for more underlying than their contribution supports",
+    "Reward extraction: attacker claims, harvests, redirects, or inflates rewards beyond their stake, share, epoch, or eligibility",
+    "Protocol value drain: attacker drains protocol-held liquidity, fees, escrowed assets, treasury assets, bridge backing, or locker custody",
+    "Approval or permit drain: attacker moves user or protocol assets through invalid signature, nonce, spender, approval, or wrapper authorization checks",
+    "Oracle/price extraction: attacker manipulates a price source to mint, redeem, borrow, liquidate, swap, or claim more value than they paid"
+  ],
+  "known_rejection_memory": [
+    "Reject pure key compromise, malicious owner action, governance capture, or deployer rug unless the contract has a bypassable on-chain authorization invariant relevant to the live target.",
+    "Reject generic scams, price drops, honeypot reputation issues, and social engineering unless a concrete vulnerable on-chain value path is identified.",
+    "Reject DoS, freeze, liveness, griefing, blocked selling, or stuck funds unless the same reachable path gives the attacker concrete value extraction.",
+    "Reject normal market arbitrage, expected MEV, or ordinary price movement unless a protocol invariant is broken and the attacker gains beyond entitlement.",
+    "Reject stale external dependency assumptions unless the live target directly depends on that state and the attacker can profitably trigger the exploit.",
+    "Reject reports that only say flash loan was used; require the broken reserve, share, reward, price, or authorization invariant.",
+    "Reject claims without current live balances, reserves, backing assets, reward state, or proof that the target still holds value.",
+    "Reject old/deprecated-contract findings if no live funds, recoverable backing, active approvals, locked LP, or reward balances remain."
+  ],
+  "incident_primitives": [
+    "reserve_desync_sync_skim_burn",
+    "token_hook_pair_balance_drain",
+    "forgeable_liquidity_add_detection",
+    "lp_share_or_vault_share_inflation",
+    "fake_lp_token_or_position_validation",
+    "spot_price_or_oracle_flashloan_extraction",
+    "reward_accumulator_or_claim_replay",
+    "permit_signature_or_approval_wrapper_drain",
+    "liquidity_locker_owner_override",
+    "bridge_wrapped_supply_or_escrow_mismatch",
+    "deprecated_pool_or_old_path_compatibility",
+    "admin_role_bypass_to_mint_dump_or_withdraw"
+  ],
+  "slowmist_reference": {
+    "source_url": "https://hacked.slowmist.io/",
+    "captured_at": "2026-07-01",
+    "total_pages_checked": 109,
+    "total_events_reported_by_source": 2172,
+    "pool_token_liquidity_related_events_matched": 934,
+    "matched_bucket_counts_are_overlapping": true,
+    "bucket_counts": {
+      "token_mint_burn_transfer_tax_or_hook": 454,
+      "flashloan_price_reserve_or_oracle_manipulation": 303,
+      "admin_owner_deployer_governance_or_key_to_liquidity_dump": 263,
+      "lp_share_vault_deposit_withdraw_or_redeem_accounting": 211,
+      "bridge_wrapped_token_escrow_or_vault_liquidity": 144,
+      "reward_claim_dividend_staking_or_harvest": 142,
+      "reserve_sync_skim_or_burn_from_pair": 113,
+      "frontend_approval_permit_signature_or_drainer": 54
+    }
+  }
+}

@@ -1,0 +1,50 @@
+name: 0.4 Materialize Pool Token Scanner Seed
+
+on:
+  workflow_dispatch:
+    inputs:
+      smoke_limit:
+        description: "Optional small-run limit for smoke testing"
+        required: false
+        default: ""
+      chain_next:
+        description: "Verify output and dispatch the next workflow"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  materialize-seed:
+    runs-on: ubuntu-latest
+    env:
+      BOT_SMOKE_LIMIT: ${{ inputs.smoke_limit }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Materialize scanner seed
+        run: python run_pool_token_stage.py materialize-scanner-seed
+
+      - name: Commit artifacts
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -f scanned/
+          git commit -m "Auto-update: materialize pool token scanner seed" || echo "No changes to commit"
+          git pull --rebase origin master
+          git push origin master
+
+      - name: Verify and advance chain
+        if: inputs.chain_next == 'true'
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: python workflow_chain.py advance --stage 0.4 --next-workflow 7_run_scanner.yml --smoke-limit "${{ inputs.smoke_limit }}"
