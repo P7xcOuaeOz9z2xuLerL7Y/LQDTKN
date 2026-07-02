@@ -14,13 +14,13 @@ from scanned_report_schema import SCANNED_REPORT_CONTRACT
 
 
 class BlueprintPromptTests(unittest.TestCase):
-    def test_default_blueprint_preserves_deepwiki_memory(self):
+    def test_default_blueprint_is_live_pool_token_machine(self):
         blueprint = load_blueprint()
 
-        self.assertEqual(blueprint["repo_name"], "623_sable_active_pool")
-        self.assertIn("src/ActivePool.sol", blueprint["scope_files"])
-        self.assertEqual(len(blueprint["target_scopes"]), 2)
-        self.assertTrue(any("fund extraction" in scope.lower() for scope in blueprint["target_scopes"]))
+        self.assertEqual(blueprint["repo_name"], "pool-token-live-bounty")
+        self.assertIn("targets/**/*.json", blueprint["scope_files"])
+        self.assertGreaterEqual(len(blueprint["target_scopes"]), 5)
+        self.assertIn("fund extraction", blueprint["paid_impact_focus"].lower())
         self.assertTrue(any("reward extraction" in scope.lower() for scope in blueprint["target_scopes"]))
 
     def test_audit_prompt_uses_triage_verdicts_not_final_validation(self):
@@ -43,14 +43,14 @@ class BlueprintPromptTests(unittest.TestCase):
         self.assertIn("DeepWiki Memory Blueprint", prompt)
         self.assertIn("Known rejection memory", prompt)
         self.assertIn("Local proof idea", prompt)
-        self.assertIn("src/Interfaces/IActivePool.sol", prompt)
+        self.assertIn("IUniswapV2Pair", prompt)
 
     def test_repository_rotation_ignores_stale_other_protocol_urls(self):
         repo_data = """
 [
   "https://deepwiki.com/example/midnight--001",
-  "https://deepwiki.com/example/623_sable_active_pool--001",
-  "https://deepwiki.com/example/623_sable_active_pool--002"
+  "https://deepwiki.com/example/pool-token-live-bounty--001",
+  "https://deepwiki.com/example/pool-token-live-bounty--002"
 ]
 """
         with patch("questions.os.path.exists", return_value=True):
@@ -60,8 +60,8 @@ class BlueprintPromptTests(unittest.TestCase):
         self.assertEqual(
             urls,
             [
-                "https://deepwiki.com/example/623_sable_active_pool--001",
-                "https://deepwiki.com/example/623_sable_active_pool--002",
+                "https://deepwiki.com/example/pool-token-live-bounty--001",
+                "https://deepwiki.com/example/pool-token-live-bounty--002",
             ],
         )
 
@@ -79,7 +79,9 @@ class BlueprintPromptTests(unittest.TestCase):
         self.assertIn("Scanned Report JSON Contract", prompt)
         self.assertIn('"schema_version": "scanned-report-v1"', prompt)
         self.assertIn("Output only valid JSON", prompt)
-        self.assertIn("stale live context does not match active blueprint", prompt)
+        self.assertIn("Active Target Snapshot", prompt)
+        self.assertIn("Live Context Snapshot", prompt)
+        self.assertIn("inline live context does not match active target", prompt)
         self.assertIn("python3 live_context_scanner.py --from-questions", prompt)
 
     def test_scanned_report_contract_only_allows_paid_scope_families(self):
@@ -91,7 +93,7 @@ class BlueprintPromptTests(unittest.TestCase):
     def test_proof_gate_prompt_asks_exact_live_state_question(self):
         with tempfile.TemporaryDirectory() as tmp:
             live_context = Path(tmp) / "live_context.json"
-            live_context.write_text('{"protocol": {"name": "Sable"}, "contracts": []}', encoding="utf-8")
+            live_context.write_text('{"protocol": "wkeydao", "contracts": []}', encoding="utf-8")
 
             with patch.dict(os.environ, {"LIVE_CONTEXT_PATH": str(live_context)}, clear=False):
                 prompt = questions.proof_gate_format("candidate overclaims rewards")
@@ -100,7 +102,7 @@ class BlueprintPromptTests(unittest.TestCase):
         self.assertIn("Does this exact current protocol, with current live state", prompt)
         self.assertIn('"schema_version": "proof-gate-v1"', prompt)
         self.assertIn("Output only valid JSON", prompt)
-        self.assertIn('"protocol": {"name": "Sable"}', prompt)
+        self.assertIn('"protocol": "wkeydao"', prompt)
 
     def test_proof_gate_contract_tracks_hard_gates(self):
         hard_gates = PROOF_GATE_CONTRACT["hard_gates"]

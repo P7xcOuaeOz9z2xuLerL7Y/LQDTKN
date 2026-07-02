@@ -138,6 +138,35 @@ Source: {live_context_path}
 """
 
 
+def _active_target_snapshot(max_chars: int = 12000) -> str:
+    active_target_path = os.environ.get("ACTIVE_TARGET_PATH", "setup/active_target.json")
+    if not os.path.exists(active_target_path):
+        return f"""## Active Target Snapshot
+No active target file was found at `{active_target_path}`.
+For non-REJECT output, identify the exact target address and chain from the scanner input and mark missing target registry as a proof precondition.
+"""
+
+    try:
+        with open(active_target_path, "r", encoding="utf-8") as f:
+            content = f.read().strip()
+    except OSError as exc:
+        return f"""## Active Target Snapshot
+Could not read `{active_target_path}`: {exc}
+For non-REJECT output, identify the exact target address and chain from the scanner input and mark missing target registry as a proof precondition.
+"""
+
+    if len(content) > max_chars:
+        content = content[:max_chars] + "\n...TRUNCATED..."
+
+    return f"""## Active Target Snapshot
+Source: {active_target_path}
+
+```json
+{content}
+```
+"""
+
+
 def _primitive_matches_snapshot(max_chars: int = 20000) -> str:
     primitive_matches_path = os.environ.get("PRIMITIVE_MATCHES_PATH", "setup/primitive_matches.json")
     if not os.path.exists(primitive_matches_path):
@@ -417,6 +446,10 @@ def scan_format(report: str) -> str:
 
 {_blueprint_memory()}
 
+{_active_target_snapshot()}
+
+{_live_context_snapshot()}
+
 {_primitive_matches_snapshot()}
 
 {_deepwiki_limitation_gate()}
@@ -435,9 +468,10 @@ Return only a strict JSON object that follows the contract below.
 {scanned_contract}
 
 ## Live On-Chain Context Rules
-- If `setup/live_context.json` exists, use it as live protocol context only when `protocol.name`, contract names, addresses, source files, and audit focus match the active blueprint/project above.
-- If live context belongs to another protocol, set `target_protocol_gate.context_matches_blueprint=false`, set `rejection_gates.not_stale_live_context=false`, and return `verdict="REJECT"` with `rejection_reason="stale live context does not match active blueprint"`.
-- If live context is missing, do not invent balances, addresses, structs, mappings, events, or state. Put `live_context_source="none"` and list the exact commands needed to gather them.
+- Treat the inline Active Target Snapshot and Live Context Snapshot in this prompt as the source of truth for this run.
+- Do not use older DeepWiki-indexed `setup/live_context.json`, `setup/active_target.json`, repository memory, or previous protocol names if they conflict with the inline snapshots above.
+- If the inline live context target address, chain, protocol label, contracts, or related token expansion conflicts with the inline active target, set `target_protocol_gate.context_matches_blueprint=false`, set `rejection_gates.not_stale_live_context=false`, and return `verdict="REJECT"` with `rejection_reason="inline live context does not match active target"`.
+- If inline live context is missing, do not invent balances, addresses, structs, mappings, events, or state. Put `live_context_source="none"` and list the exact commands needed to gather them.
 - Prefer observed on-chain state over generic assumptions: balances, token decimals, pool liabilities, trove state, reward accumulators, staking totals, oracle configuration, proxy implementation/admin, mappings, structs, recent events, and dependency addresses.
 - Every non-REJECT output must include the exact command(s) or JSON source field(s) used for each material live precondition.
 - Do not promote a candidate when the exploit only works under a hypothetical state that is not present or not reachable from the observed live protocol state.
