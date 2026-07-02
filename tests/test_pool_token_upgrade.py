@@ -13,6 +13,8 @@ from incident_primitives import build_matches, load_primitive_bank, match_primit
 from live_context_scanner import (
     CHAIN_CONFIGS,
     COMMON_TOKENS,
+    annotate_pool_related_tokens,
+    append_pool_token_contexts,
     collect_amm_pair_context,
     collect_curve_like_context,
     collect_liquidity_pool_context,
@@ -20,6 +22,7 @@ from live_context_scanner import (
     infer_audit_focus,
     infer_risk_notes,
     parse_scope_item,
+    summarize_related_targets,
 )
 from pool_token_probe_manifest import build_probe_manifest
 from pool_token_stage_runner import materialize_scanner_seed
@@ -480,6 +483,106 @@ class LiveContextScannerUpgradeTests(unittest.TestCase):
         self.assertTrue(any("protocol-specific liquidity pool" in item for item in focus))
         self.assertTrue(any("reserve/balance desync" in item for item in focus))
 
+    def test_pair_related_tokens_marks_onc_as_primary_suspect_and_usdt_as_counter_asset(self):
+        contract = {
+            "address": FakePairRpc.pair,
+            "liquidity_pool": {
+                "is_pool_like": True,
+                "adapters": [
+                    {
+                        "standard": "uniswap_v2_like",
+                        "token0": {
+                            "address": "0x9999999999999999999999999999999999999999",
+                            "symbol": "ONC",
+                            "name": "ONC Token",
+                            "decimals": 18,
+                        },
+                        "token1": {
+                            "address": "0x55d398326f99059ff775485246999027b3197955",
+                            "symbol": "USDT",
+                            "name": "Tether USD",
+                            "decimals": 18,
+                        },
+                    }
+                ],
+            },
+        }
+
+        refs = annotate_pool_related_tokens("bsc", contract)
+        related = summarize_related_targets([contract])
+
+        self.assertEqual(len(refs), 2)
+        self.assertEqual(contract["pool_related_tokens"]["primary_suspect_tokens"][0]["symbol"], "ONC")
+        self.assertEqual(contract["pool_related_tokens"]["counter_assets"][0]["symbol"], "USDT")
+        self.assertEqual(related[0]["pool_address"], FakePairRpc.pair)
+
+    def test_append_pool_token_contexts_scans_only_non_common_pair_token(self):
+        pool_contract = {
+            "address": FakePairRpc.pair,
+            "liquidity_pool": {
+                "is_pool_like": True,
+                "adapters": [
+                    {
+                        "standard": "uniswap_v2_like",
+                        "token0": {
+                            "address": "0x9999999999999999999999999999999999999999",
+                            "symbol": "ONC",
+                            "name": "ONC Token",
+                            "decimals": 18,
+                        },
+                        "token1": {
+                            "address": "0x55d398326f99059ff775485246999027b3197955",
+                            "symbol": "USDT",
+                            "name": "Tether USD",
+                            "decimals": 18,
+                        },
+                    }
+                ],
+            },
+        }
+        calls = []
+
+        def fake_builder(**kwargs):
+            calls.append(kwargs["address"])
+            return {
+                "name": "ONCToken",
+                "address": kwargs["address"],
+                "balances": {"erc20": []},
+                "views": {"owner": "0x0000000000000000000000000000000000000000"},
+                "events_discovered": {},
+                "amm_pair": {"is_pair_like": False},
+                "liquidity_pool": {"is_pool_like": False},
+                "risk_notes": [],
+                "audit_focus": [],
+                "_meta": {},
+            }
+
+        expanded = append_pool_token_contexts(
+            client=FakePairRpc(),
+            chain_cfg=CHAIN_CONFIGS["bsc"],
+            protocol="ONC",
+            contracts=[pool_contract],
+            latest_block=123,
+            sample_window_blocks=10,
+            max_view_calls=1,
+            max_event_samples=1,
+            max_events=1,
+            max_erc20_tokens=1,
+            discover_transfer_tokens=False,
+            include_nft_scan=False,
+            include_dependencies=False,
+            mapping_time_budget_s=0.0,
+            etherscan_api_key=None,
+            max_expansions=4,
+            context_builder=fake_builder,
+        )
+
+        self.assertEqual(calls, ["0x9999999999999999999999999999999999999999"])
+        self.assertEqual(len(expanded), 1)
+        self.assertEqual(expanded[0]["_meta"]["target_role"], "pool_underlying_token")
+        self.assertEqual(expanded[0]["_meta"]["pool_parent"], FakePairRpc.pair)
+        self.assertIn("token-side pool drain", expanded[0]["audit_focus"][0])
+
 
 class PoolTokenTargetRegistryTests(unittest.TestCase):
     def test_normalize_target_accepts_bscscan_url_and_raw_address(self):
@@ -540,6 +643,22 @@ class PoolTokenTargetRegistryTests(unittest.TestCase):
             try:
                 os.chdir(root)
                 write_target_artifacts(record, registry_path=registry_path, active_target_path=active_path)
+                live_context_path = Path(record["paths"]["live_context"])
+                live_context_path.parent.mkdir(parents=True, exist_ok=True)
+                live_context_path.write_text(
+                    json.dumps(
+                        {
+                            "related_targets": [
+                                {
+                                    "address": "0x9999999999999999999999999999999999999999",
+                                    "symbol": "ONC",
+                                    "target_role": "primary_suspect_token",
+                                }
+                            ]
+                        }
+                    ),
+                    encoding="utf-8",
+                )
                 seed_path = materialize_scanner_seed(registry_path)
             finally:
                 os.chdir(old_cwd)
@@ -548,6 +667,7 @@ class PoolTokenTargetRegistryTests(unittest.TestCase):
             parsed = json.loads(seed_path.read_text(encoding="utf-8"))
             self.assertEqual(parsed["schema_version"], "pool-token-scanner-seed-v1")
             self.assertEqual(parsed["target"]["chain"], "bsc")
+            self.assertEqual(parsed["related_targets"][0]["symbol"], "ONC")
 
 
 class PoolTokenWorkflowChainTests(unittest.TestCase):

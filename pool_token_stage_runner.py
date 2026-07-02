@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -90,6 +91,15 @@ def generate_probe_manifest(registry_path: str = str(DEFAULT_REGISTRY_PATH)) -> 
 def materialize_scanner_seed(registry_path: str = str(DEFAULT_REGISTRY_PATH)) -> Path:
     target = active_target(load_registry(registry_path))
     seed_path = Path("scanned") / f"pool_token_seed__{target['chain']}__{target['address']}.json"
+    related_targets = []
+    live_context_path = Path(target["paths"]["live_context"])
+    if live_context_path.exists():
+        try:
+            live_context = json.loads(live_context_path.read_text(encoding="utf-8"))
+            if isinstance(live_context.get("related_targets"), list):
+                related_targets = live_context["related_targets"]
+        except (json.JSONDecodeError, OSError):
+            related_targets = []
     seed = {
         "schema_version": "pool-token-scanner-seed-v1",
         "target": {
@@ -107,6 +117,7 @@ def materialize_scanner_seed(registry_path: str = str(DEFAULT_REGISTRY_PATH)) ->
             "primitive_matches": target["paths"]["primitive_matches"],
             "probe_manifest": target["paths"]["probe_manifest"],
         },
+        "related_targets": related_targets,
         "instruction": "Use the active live pool/token blueprint plus primitive matches. Return only candidates that need local proof; do not mark anything validated.",
     }
     return write_json(seed_path, seed)

@@ -132,6 +132,21 @@ COMMON_TOKENS: Dict[str, List[Dict[str, Any]]] = {
 }
 
 
+COMMON_COUNTER_SYMBOLS = {
+    "USDT",
+    "USDC",
+    "DAI",
+    "BUSD",
+    "BSC-USD",
+    "WBNB",
+    "WETH",
+    "WBTC",
+    "BTCB",
+    "ETH",
+    "BNB",
+}
+
+
 ADDRESS_RE = re.compile(r"0x[a-fA-F0-9]{40}")
 UINT_TYPE_RE = re.compile(r"^uint([0-9]{0,3})$")
 INT_TYPE_RE = re.compile(r"^int([0-9]{0,3})$")
@@ -1641,6 +1656,115 @@ def collect_amm_pair_context(client: RpcClient, pair_address: str) -> Dict[str, 
     return collect_v2_pair_context(client, pair_address)
 
 
+def is_common_counter_asset(chain: str, token: Dict[str, Any]) -> bool:
+    address = token.get("address")
+    symbol = str(token.get("symbol") or "").upper()
+    common_addresses = {
+        addr_norm(item["address"])
+        for item in COMMON_TOKENS.get(chain, [])
+        if isinstance(item, dict) and is_address(item.get("address"))
+    }
+    if is_address(address) and addr_norm(address) in common_addresses:
+        return True
+    return symbol in COMMON_COUNTER_SYMBOLS
+
+
+def _pool_token_ref(
+    chain: str,
+    pool_address: str,
+    adapter: Dict[str, Any],
+    token: Dict[str, Any],
+    role: str,
+) -> Optional[Dict[str, Any]]:
+    address = token.get("address") if isinstance(token, dict) else None
+    if not is_address(address):
+        return None
+    ref = {
+        "address": addr_norm(address),
+        "symbol": token.get("symbol", "unknown"),
+        "name": token.get("name", "unknown"),
+        "decimals": token.get("decimals"),
+        "role": role,
+        "pool_address": addr_norm(pool_address),
+        "pool_standard": adapter.get("standard", "unknown"),
+        "is_common_counter_asset": False,
+        "target_role": "primary_suspect_token",
+    }
+    ref["is_common_counter_asset"] = is_common_counter_asset(chain, ref)
+    if ref["is_common_counter_asset"]:
+        ref["target_role"] = "counter_asset"
+    return ref
+
+
+def pool_token_refs_from_contract(chain: str, contract: Dict[str, Any]) -> List[Dict[str, Any]]:
+    pool_address = contract.get("address")
+    if not is_address(pool_address):
+        return []
+    liquidity_pool = contract.get("liquidity_pool")
+    if not isinstance(liquidity_pool, dict) or not liquidity_pool.get("is_pool_like"):
+        return []
+
+    refs: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for adapter in liquidity_pool.get("adapters", []):
+        if not isinstance(adapter, dict):
+            continue
+        candidates: List[Tuple[str, Dict[str, Any]]] = []
+        if isinstance(adapter.get("token0"), dict):
+            candidates.append(("token0", adapter["token0"]))
+        if isinstance(adapter.get("token1"), dict):
+            candidates.append(("token1", adapter["token1"]))
+        for index, coin in enumerate(adapter.get("coins", [])):
+            if isinstance(coin, dict):
+                candidates.append((f"coin{index}", coin))
+
+        for role, token in candidates:
+            ref = _pool_token_ref(chain, pool_address, adapter, token, role)
+            if not ref:
+                continue
+            key = ref["address"]
+            if key in seen:
+                continue
+            seen.add(key)
+            refs.append(ref)
+    return refs
+
+
+def annotate_pool_related_tokens(chain: str, contract: Dict[str, Any]) -> List[Dict[str, Any]]:
+    refs = pool_token_refs_from_contract(chain, contract)
+    if not refs:
+        return []
+    suspect_refs = [ref for ref in refs if ref["target_role"] == "primary_suspect_token"]
+    if not suspect_refs:
+        suspect_refs = refs[:1]
+        suspect_refs[0]["target_role"] = "primary_suspect_token"
+
+    suspect_addresses = {ref["address"] for ref in suspect_refs}
+    for ref in refs:
+        if ref["address"] in suspect_addresses:
+            ref["target_role"] = "primary_suspect_token"
+
+    contract["pool_related_tokens"] = {
+        "tokens": refs,
+        "primary_suspect_tokens": [ref for ref in refs if ref["target_role"] == "primary_suspect_token"],
+        "counter_assets": [ref for ref in refs if ref["target_role"] == "counter_asset"],
+        "expansion_policy": (
+            "Pair/pool inputs are expanded into full contract scans for non-common underlying tokens; "
+            "common quote/base assets remain context unless no suspect token exists."
+        ),
+    }
+    return refs
+
+
+def summarize_related_targets(contracts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    related = []
+    for contract in contracts:
+        for ref in contract.get("pool_related_tokens", {}).get("tokens", []):
+            if isinstance(ref, dict):
+                related.append(ref)
+    return related
+
+
 def transfer_token_candidates(
     client: RpcClient,
     address: str,
@@ -2138,6 +2262,83 @@ def build_contract_context(
     return contract_ctx
 
 
+def append_pool_token_contexts(
+    *,
+    client: RpcClient,
+    chain_cfg: ChainConfig,
+    protocol: str,
+    contracts: List[Dict[str, Any]],
+    latest_block: int,
+    sample_window_blocks: int,
+    max_view_calls: int,
+    max_event_samples: int,
+    max_events: int,
+    max_erc20_tokens: int,
+    discover_transfer_tokens: bool,
+    include_nft_scan: bool,
+    include_dependencies: bool,
+    mapping_time_budget_s: float,
+    etherscan_api_key: Optional[str],
+    max_expansions: int,
+    context_builder: Any = build_contract_context,
+) -> List[Dict[str, Any]]:
+    existing_addresses = {
+        addr_norm(contract["address"])
+        for contract in contracts
+        if isinstance(contract, dict) and is_address(contract.get("address"))
+    }
+    expansion_queue: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+
+    for contract in contracts:
+        refs = annotate_pool_related_tokens(chain_cfg.chain, contract)
+        for ref in refs:
+            if ref.get("target_role") != "primary_suspect_token":
+                continue
+            address = ref["address"]
+            if address in existing_addresses:
+                continue
+            expansion_queue.append((contract, ref))
+
+    expanded: List[Dict[str, Any]] = []
+    for parent, ref in expansion_queue[:max_expansions]:
+        token_address = ref["address"]
+        print(
+            f"[scan] expanding pool token {token_address} from pool {parent.get('address')}",
+            flush=True,
+        )
+        child = context_builder(
+            client=client,
+            chain_cfg=chain_cfg,
+            protocol=protocol,
+            address=token_address,
+            latest_block=latest_block,
+            sample_window_blocks=sample_window_blocks,
+            max_view_calls=max_view_calls,
+            max_event_samples=max_event_samples,
+            max_events=max_events,
+            max_erc20_tokens=max_erc20_tokens,
+            discover_transfer_tokens=discover_transfer_tokens,
+            include_nft_scan=include_nft_scan,
+            include_dependencies=include_dependencies,
+            mapping_time_budget_s=mapping_time_budget_s,
+            etherscan_api_key=etherscan_api_key,
+        )
+        child["_meta"]["target_role"] = "pool_underlying_token"
+        child["_meta"]["pool_parent"] = parent.get("address", "")
+        child["_meta"]["pool_token_role"] = ref.get("role", "")
+        child["_meta"]["pool_standard"] = ref.get("pool_standard", "")
+        child["risk_notes"].insert(
+            0,
+            "Expanded from a live liquidity pair/pool; audit token-side transfer, fee, mint, burn, rebase, and pair-accounting paths.",
+        )
+        child["audit_focus"].insert(0, "token-side pool drain through the parent liquidity pair")
+        expanded.append(child)
+        existing_addresses.add(token_address)
+
+    contracts.extend(expanded)
+    return expanded
+
+
 def infer_protocol_name(contracts: List[Dict[str, Any]], fallback: str = "UNKNOWN") -> str:
     prefixes = []
     for c in contracts:
@@ -2173,6 +2374,8 @@ def scan_chain_scope(
     include_dependencies: bool,
     mapping_time_budget_s: float,
     etherscan_api_key: Optional[str],
+    expand_pool_tokens: bool,
+    max_pool_token_expansions: int,
 ) -> Dict[str, Any]:
     client = RpcClient(chain_cfg.rpc_endpoints)
     block_number, _ = get_block_and_timestamp(client)
@@ -2200,6 +2403,26 @@ def scan_chain_scope(
             )
         )
 
+    if expand_pool_tokens:
+        append_pool_token_contexts(
+            client=client,
+            chain_cfg=chain_cfg,
+            protocol=protocol_hint or "UNKNOWN",
+            contracts=contracts,
+            latest_block=block_number,
+            sample_window_blocks=sample_window_blocks,
+            max_view_calls=max_view_calls,
+            max_event_samples=max_event_samples,
+            max_events=max_events,
+            max_erc20_tokens=max_erc20_tokens,
+            discover_transfer_tokens=discover_transfer_tokens,
+            include_nft_scan=include_nft_scan,
+            include_dependencies=include_dependencies,
+            mapping_time_budget_s=mapping_time_budget_s,
+            etherscan_api_key=etherscan_api_key,
+            max_expansions=max_pool_token_expansions,
+        )
+
     protocol = protocol_hint or infer_protocol_name(contracts, fallback="UNKNOWN")
     return {
         "protocol": protocol,
@@ -2207,6 +2430,7 @@ def scan_chain_scope(
         "generated_at": now_iso_utc(),
         "block_number": block_number,
         "contracts": contracts,
+        "related_targets": summarize_related_targets(contracts),
     }
 
 
@@ -2369,6 +2593,17 @@ def parse_args() -> argparse.Namespace:
         help="Resolve dependency contract metadata/views from discovered addresses (slower).",
     )
     parser.add_argument(
+        "--disable-pool-token-expansion",
+        action="store_true",
+        help="Do not automatically scan non-common token contracts discovered behind pool/pair addresses.",
+    )
+    parser.add_argument(
+        "--max-pool-token-expansions",
+        type=int,
+        default=4,
+        help="Maximum non-common pool token contracts to auto-scan per chain context.",
+    )
+    parser.add_argument(
         "--mapping-time-budget-s",
         type=float,
         default=20.0,
@@ -2419,6 +2654,8 @@ def main() -> int:
             include_dependencies=args.include_dependencies,
             mapping_time_budget_s=args.mapping_time_budget_s,
             etherscan_api_key=args.etherscan_api_key,
+            expand_pool_tokens=not args.disable_pool_token_expansion,
+            max_pool_token_expansions=max(0, args.max_pool_token_expansions),
         )
         contexts.append(context)
 
