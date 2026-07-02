@@ -76,6 +76,8 @@ STAGES = {
             "deepwiki_candidates/*.json",
             "deepwiki_unknown/*.md",
             "deepwiki_unknown/*.json",
+            "rejected_by_deepwiki/*.md",
+            "rejected_by_deepwiki/*.json",
             "validated/*.md",
         ),
         remaining_globs=("validated_questions/*.json",),

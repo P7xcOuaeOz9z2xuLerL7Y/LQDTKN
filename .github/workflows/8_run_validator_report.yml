@@ -116,6 +116,7 @@ jobs:
       - name: Run reports with virtual display
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          SAVE_REJECTED_DEEPWIKI: "1"
 
         run: |
           sudo apt-get update
